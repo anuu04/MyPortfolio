@@ -2094,6 +2094,7 @@ header .navbar-expand .dropdown:hover > .dropdown-menu {
   overflow: hidden;
 }
 .portfolio-item .card-thumb img {
+  width: 100%;
   min-height: 550px;
   object-fit: cover;
   transition: all var(--transition-function) var(--transition-duration);
