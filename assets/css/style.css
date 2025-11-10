@@ -890,9 +890,9 @@ aside {
   transform: translate(-50%, -50%);
   z-index: -1;
 }
-.btn.magnetic-button:hover {
+/* .btn.magnetic-button:hover {
   color: var(--primary-t-color);
-}
+} */
 .btn.magnetic-button:hover span {
   width: 225%;
   height: 562.5px;
@@ -911,9 +911,9 @@ aside {
 .btn.btn-outline span {
   background-color: var(--primary-t-color);
 }
-.btn.magnetic-button.btn-outline:hover {
+/* .btn.magnetic-button.btn-outline:hover {
   color: var(--white-color);
-}
+} */
 .btn.content-btn {
   padding: 0.875rem 1.5rem;
 }
