@@ -911,9 +911,9 @@ aside {
 .btn.btn-outline span {
   background-color: var(--primary-t-color);
 }
-/* .btn.magnetic-button.btn-outline:hover {
+.btn.magnetic-button.btn-outline:hover {
   color: var(--white-color);
-} */
+}
 .btn.content-btn {
   padding: 0.875rem 1.5rem;
 }
