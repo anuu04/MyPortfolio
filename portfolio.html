@@ -19,7 +19,101 @@
 
 	<!-- Style css -->
 	<link rel="stylesheet" href="assets/css/style.css">
+<style>
+	/* Image Viewer Modal Styles */
+.image-viewer-modal {
+    display: none; /* Hidden by default */
+    position: fixed;
+    z-index: 9999; /* Sit on top */
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden; 
+    background-color: rgba(10, 10, 10, 0.95); /* Deep dark background */
+    backdrop-filter: blur(5px); /* Modern blur effect */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    pointer-events: none; /* Allows clicking through when hidden */
+}
 
+.image-viewer-modal.active {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.viewer-content-wrapper {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+.viewer-content {
+    max-width: 90%;
+    max-height: 90vh;
+    border-radius: 8px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    transition: transform 0.2s ease-out; /* Smooth zoom */
+    cursor: grab;
+}
+
+.viewer-content:active {
+    cursor: grabbing;
+}
+
+/* Close Button */
+.close-viewer {
+    position: absolute;
+    top: 20px;
+    right: 35px;
+    color: #f1f1f1;
+    font-size: 40px;
+    font-weight: bold;
+    cursor: pointer;
+    z-index: 10001;
+    transition: 0.3s;
+}
+
+.close-viewer:hover {
+    color: #bbb;
+}
+
+/* Zoom Controls */
+.zoom-controls {
+    position: absolute;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(255, 255, 255, 0.1);
+    padding: 10px 20px;
+    border-radius: 50px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    display: flex;
+    gap: 15px;
+    z-index: 10001;
+}
+
+.zoom-controls button {
+    background: transparent;
+    border: none;
+    color: white;
+    font-size: 16px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: 0.2s;
+}
+
+.zoom-controls button:hover {
+    color: #ffc107; /* Or your theme color */
+    transform: scale(1.1);
+}
+</style>
 </head>
 
 <body>
@@ -542,6 +636,19 @@
 	</div>
 	<!-- ***** Main Area End ***** -->
 
+	<div id="imageViewer" class="image-viewer-modal">
+    <span class="close-viewer">&times;</span>
+    
+    <div class="viewer-content-wrapper">
+        <img class="viewer-content" id="fullImage">
+    </div>
+
+    <div class="zoom-controls">
+        <button onclick="zoomOut()"><i class="fas fa-minus"></i> - </button>
+        <button onclick="resetZoom()">Reset</button>
+        <button onclick="zoomIn()"><i class="fas fa-plus"></i> + </button>
+    </div>
+</div>
 
 	<!-- ***** All jQuery Plugins ***** -->
 
@@ -564,6 +671,113 @@
 
 	<!-- Main js -->
 	<script src="assets/js/main.js"></script>
+
+	<script>
+    // Variables for Zoom Logic
+    let scale = 1;
+    let panning = false;
+    let pointX = 0;
+    let pointY = 0;
+    let startX = 0;
+    let startY = 0;
+    const modal = document.getElementById("imageViewer");
+    const modalImg = document.getElementById("fullImage");
+
+    // 1. Function to open Modal
+    function openModal(imageSrc) {
+        modalImg.src = imageSrc;
+        modal.style.display = "flex";
+        // Small timeout to allow display:flex to apply before adding opacity for fade effect
+        setTimeout(() => {
+            modal.classList.add('active');
+        }, 10);
+        resetZoom(); // Always start at normal size
+    }
+
+    // 2. Event Listener for your existing links
+    // This targets both the Image click (.card-thumb) and the "Show Project" link (.project-link a)
+    $(document).on('click', '.card-thumb, .project-link a', function(e) {
+        e.preventDefault(); // Stop it from going to portfolio-single.html
+        
+        // Find the image inside the specific portfolio item card
+        let img = $(this).closest('.portfolio-item').find('img').attr('src');
+        
+        if(img) {
+            openModal(img);
+        }
+    });
+
+    // 3. Close Logic
+    document.querySelector('.close-viewer').onclick = function() {
+        modal.classList.remove('active');
+        setTimeout(() => {
+            modal.style.display = "none";
+        }, 300);
+    }
+
+    // Close if clicked outside the image
+    modal.onclick = function(e) {
+        if (e.target === modal || e.target.classList.contains('viewer-content-wrapper')) {
+            document.querySelector('.close-viewer').click();
+        }
+    }
+
+    // 4. Zoom Functions
+    function updateTransform() {
+        modalImg.style.transform = `translate(${pointX}px, ${pointY}px) scale(${scale})`;
+    }
+
+    function zoomIn() {
+        scale += 0.2;
+        updateTransform();
+    }
+
+    function zoomOut() {
+        if (scale > 0.4) { // Prevent zooming out too much
+            scale -= 0.2;
+            updateTransform();
+        }
+    }
+
+    function resetZoom() {
+        scale = 1;
+        pointX = 0;
+        pointY = 0;
+        updateTransform();
+    }
+
+    // 5. Mouse Wheel Zoom support (Optional but modern)
+    modal.addEventListener('wheel', function(e) {
+        e.preventDefault();
+        if (e.deltaY < 0) {
+            zoomIn();
+        } else {
+            zoomOut();
+        }
+    });
+
+    // 6. Dragging/Panning functionality (when zoomed in)
+    modalImg.onmousedown = function(e) {
+        e.preventDefault();
+        startX = e.clientX - pointX;
+        startY = e.clientY - pointY;
+        panning = true;
+    }
+
+    modalImg.onmouseup = function(e) {
+        panning = false;
+    }
+
+    modalImg.onmousemove = function(e) {
+        e.preventDefault();
+        if (!panning) return;
+        if (scale <= 1) return; // Only drag if zoomed in
+        
+        pointX = e.clientX - startX;
+        pointY = e.clientY - startY;
+        updateTransform();
+    }
+</script>
 </body>
 
 
